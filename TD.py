@@ -16,7 +16,7 @@ canvas = tk.Canvas(root, width=n*size, height=n*size)
 for i in range(n):
     for j in range(n):
         match i:
-            case 0 | 1 | 2:
+            case 0 | 2 | 4:
                 color = "red"
                 canvas.create_rectangle(
                     j*size, i*size,
@@ -24,7 +24,7 @@ for i in range(n):
                     fill=color, outline="black"
                 )
                 continue
-            case 3 | 4 | 5:
+            case 1 | 3 | 5:
                 color = "yellow"
                 canvas.create_oval(
                     j*size, i*size,
