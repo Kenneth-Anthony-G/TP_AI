@@ -1,32 +1,108 @@
-import tkinter as tk
 import numpy as np
+import time
+import pandas as pd
+import random
+import tkinter as tk
 
-n = 6
-size = 50
+UNIT = 100
+MAZE_H = 1
+MAZE_W = 6
+HALF_UNIT = UNIT/2
+HALF_UNIT_MINOS_10 = UNIT/2 - 10
+SIZE = int(3*UNIT/8)
 
-grid = np.zeros((n, n))
-grid[5, 5] = 1  # première case rouge
+class Maze(tk.Tk, object):
+    def __init__(self):
+        super(Maze, self).__init__()
+        self.title('Maze')
+        self.action_space = ['gauche','droite']
+        self.n_actions = len(self.action_space)
+        self.q_table = pd.DataFrame(columns=self.action_space,dtype=np.float64)
+        self.geometry('{0}x{1}'.format(MAZE_W * UNIT, MAZE_H * UNIT,))
+        self._build_maze()
 
-root = tk.Tk()
-canvas = tk.Canvas(root, width=n*size, height=n*size)
+    def _build_maze(self):
+        self.canvas = tk.Canvas(self, bg='white',
+                                height=MAZE_H * UNIT,
+                                width=MAZE_W * UNIT,)
+        self.canvas.pack()
 
-isRect = True
+        # Column
+        for c in range(MAZE_W + 1):
+            x0, y0 = c * UNIT, 0
+            x1, y1 = x0, y0 + MAZE_H * UNIT
+            self.canvas.create_line(x0, y0, x1, y1)
 
-for i in range(n):
-    isRect = not isRect
-    for j in range(n):
-        if(isRect):
-            canvas.create_rectangle(
-                    j*size, i*size,
-                    (j+1)*size, (i+1)*size,
-                    fill='red', outline="black"
+        # Row
+        for r in range(MAZE_H + 1):
+            x0, y0 = 0, r * UNIT
+            x1, y1 = x0 + MAZE_W * UNIT, y0
+            self.canvas.create_line(x0, y0, x1, y1)
+
+        # creer le point de départ
+        point_depart = np.array([UNIT / 8, UNIT / 8])
+        print(point_depart)
+
+        # creer un carre a la premiere case
+        x0, y0 = point_depart[0], point_depart[1]
+        x1, y1 = x0 + 3 * UNIT/4, y0 + 3 * UNIT/4,
+        self.rect = self.canvas.create_rectangle(x0, y0, x1, y1, fill='red')
+
+        #creer un rond a la sixieme case
+        x0, y0 = point_depart[0] + (MAZE_W - 1) * UNIT, point_depart[1]
+        x1, y1 = x0 + 3 * UNIT/4, y0 + 3 * UNIT/4
+        self.oval = self.canvas.create_oval(x0, y0, x1, y1, fill='yellow')
+
+        #pack all
+        self.canvas.pack()
+
+        return self.rect
+
+    def render(self):
+        time.sleep(1)
+        self.update()
+
+    def check_state_exist(self):
+        s = str(self.canvas.coords(self.rect))
+        if s not in self.q_table.index:
+            self.q_table = self.q_table._append(
+                pd.Series(
+                    [0]*len(self.action_space),
+                    index=self.q_table.columns,
+                    name=s
                 )
-        else :
-            canvas.create_oval(
-                    j*size, i*size,
-                    (j+1)*size, (i+1)*size,
-                    fill='yellow', outline="black"
-                )
-        isRect = not isRect
-canvas.pack()
-root.mainloop()
+            )
+
+    def step(self, action):
+        s = self.canvas.coords(self.rect)
+        base_action = np.array([0, 0])
+        if action == 'droite':
+            if s[0] < (MAZE_W - 1) * UNIT:
+                base_action[0] += UNIT
+        elif action == 'gauche':
+            if s[0] > UNIT:
+                base_action[0] -= UNIT
+        self.canvas.move(self.rect, base_action[0], base_action[1])
+        if self.canvas.coords(self.rect) == self.canvas.coords(self.oval):
+            return 0
+        else:
+            return 1
+
+
+def update():
+    # while True:
+    #     env.render()
+    if random.random() < 0.5:
+        action = 'droite'
+    else:
+        action = 'gauche'
+    if env.step(action) == 0:
+        print(env.q_table)
+        print('game over')
+    else:
+        env.after(20, update)
+
+if __name__ == "__main__":
+    env = Maze()
+
+    env.mainloop()

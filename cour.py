@@ -1,14 +1,33 @@
-from tkinter import *
+import tkinter as tk
+import sys
 
-root = Tk()
+UNIT = 80
+MAZE_H = 6
+MAZE_W = 6
 
-toile = Canvas(root,bg = 'white',height = 600,width = 600)
-r = toile.create_rectangle(10,10,110,110,fill = 'red')
-toile.create_oval(120,10,220,110,fill = 'yellow')
-toile.create_line(10,130,230,130)
-toile.pack()
-input('press return:')
-toile.move(r,100,200)
-root.mainloop()
+HALF_UNIT = UNIT / 2
+HALF_UNIT_MINUS10 = HALF_UNIT - 10
+SIZE = int(3 * UNIT / 8)
 
 
+class Maze(tk.Tk, object):
+    def __init__(self):
+        super(Maze, self).__init__()
+        self.action_space = ['u', 'd', 'l', 'r']
+        self.n_actions = len(self.action_space)
+        self.title('maze')
+        self.geometry('{0}x{1}'.format(MAZE_W * UNIT, MAZE_H * UNIT,))
+        self._build_maze()
+
+    def _build_maze(self):
+        self.canvas = tk.Canvas(self, bg='white',
+                                height=MAZE_H * UNIT,
+                                width=MAZE_W * UNIT,)
+        self.canvas.pack()
+
+
+
+if __name__ == "__main__":
+    print(__name__)
+    env = Maze()
+    env.mainloop()
