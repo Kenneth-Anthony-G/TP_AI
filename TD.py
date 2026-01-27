@@ -104,5 +104,6 @@ def update():
 
 if __name__ == "__main__":
     env = Maze()
-
+    env.check_state_exist()
+    update()
     env.mainloop()
