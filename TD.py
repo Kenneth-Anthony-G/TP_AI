@@ -41,7 +41,6 @@ class Maze(tk.Tk, object):
 
         # creer le point de départ
         point_depart = np.array([UNIT / 8, UNIT / 8])
-        print(point_depart)
 
         # creer un carre a la premiere case
         x0, y0 = point_depart[0], point_depart[1]
@@ -57,10 +56,6 @@ class Maze(tk.Tk, object):
         self.canvas.pack()
 
         return self.rect
-
-    def render(self):
-        time.sleep(1)
-        self.update()
 
     def check_state_exist(self):
         s = str(self.canvas.coords(self.rect))
@@ -88,19 +83,25 @@ class Maze(tk.Tk, object):
         else:
             return 1
 
+    def choisir_action(self):
+        env.check_state_exist()
+        if np.random.rand() < 0.1:
+            action = np.random.choice(self.action_space)
+        else:
+            s = str(self.canvas.coords(self.rect))
+            action_scores = self.q_table.loc[s, :]
+            action = np.random.choice(action_scores[action_scores == np.max(action_scores)].index)
+        return action
 
 def update():
     # while True:
     #     env.render()
-    if random.random() < 0.5:
-        action = 'droite'
-    else:
-        action = 'gauche'
+    action = env.choisir_action()
     if env.step(action) == 0:
         print(env.q_table)
         print('game over')
     else:
-        env.after(20, update)
+        env.after(200, update)
 
 if __name__ == "__main__":
     env = Maze()
