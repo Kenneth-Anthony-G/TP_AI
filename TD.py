@@ -1,3 +1,5 @@
+from tabnanny import check
+
 import numpy as np
 import time
 import pandas as pd
@@ -78,6 +80,9 @@ class Maze(tk.Tk, object):
             if s[0] > UNIT:
                 base_action[0] -= UNIT
         self.canvas.move(self.rect, base_action[0], base_action[1])
+        print('les index du tableau', env.q_table.loc[action, self.canvas.coords(self.rect)])
+        print('les columns du tableau', env.q_table.columns.tolist())
+        print('les lignes du tableau', )
         if self.canvas.coords(self.rect) == self.canvas.coords(self.oval):
             return 0
         else:
@@ -93,6 +98,12 @@ class Maze(tk.Tk, object):
             action = np.random.choice(action_scores[action_scores == np.max(action_scores)].index)
         return action
 
+    def apprendre(self):
+        self.check_state_exist()
+        # self.q_table = self.q_table.
+
+
+
 def update():
     # while True:
     #     env.render()
@@ -107,4 +118,5 @@ if __name__ == "__main__":
     env = Maze()
     env.check_state_exist()
     update()
+
     env.mainloop()
