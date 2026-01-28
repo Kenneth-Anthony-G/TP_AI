@@ -7,7 +7,7 @@ import random
 import tkinter as tk
 
 UNIT = 100
-MAZE_H = 1
+MAZE_H = 2
 MAZE_W = 6
 HALF_UNIT = UNIT/2
 HALF_UNIT_MINOS_10 = UNIT/2 - 10
@@ -17,7 +17,7 @@ class Maze(tk.Tk, object):
     def __init__(self):
         super(Maze, self).__init__()
         self.title('Maze')
-        self.action_space = ['gauche','droite']
+        self.action_space = ['gauche','droite','haut','bas']
         self.n_actions = len(self.action_space)
         self.q_table = pd.DataFrame(columns=self.action_space,dtype=np.float64)
         self.geometry('{0}x{1}'.format(MAZE_W * UNIT, MAZE_H * UNIT,))
@@ -79,6 +79,12 @@ class Maze(tk.Tk, object):
         elif action == 'gauche':
             if s[0] > UNIT:
                 base_action[0] -= UNIT
+        elif action == 'haut':
+            if s[1] > UNIT:
+                base_action[1] -= UNIT
+        elif action == 'bas':
+            if s[1] < (MAZE_H - 1) * UNIT:
+                base_action[1] += UNIT
 
         print(' base action: ', base_action)
         self.canvas.move(self.rect, base_action[0], base_action[1])
@@ -97,21 +103,29 @@ class Maze(tk.Tk, object):
             action = np.random.choice(action_scores[action_scores == np.max(action_scores)].index)
         return action
 
-    def apprendre(self):
+    def apprendre(self, action,etat_actuel, etat_suivant):
         self.check_state_exist()
-        # self.q_table = self.q_table.
+        if etat_suivant == self.canvas.coords(self.oval):
+            q_cible = 1
+        else:
+            action_scores = self.q_table.loc[str(etat_suivant), :]
+            q_cible = 0.9 * np.max(action_scores)
+        q_actuel = self.q_table.loc[str(etat_actuel), action]
 
-
+        self.q_table.loc[str(etat_actuel),action] = 0.01 * (q_cible - q_actuel)
 
 def update():
-    # while True:
-    #     env.render()
+    etat_actuel = env.canvas.coords(env.rect)
     action = env.choisir_action()
-    if env.step(action) == 0:
+    a = env.step(action)
+    etat_suivant = env.canvas.coords(env.rect)
+    env.apprendre(action,etat_actuel,etat_suivant)
+    if a == 0:
         print(env.q_table)
-        print('game over')
+        print('Game Over')
     else:
         env.after(200, update)
+
 
 if __name__ == "__main__":
     env = Maze()
