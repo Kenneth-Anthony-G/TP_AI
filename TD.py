@@ -79,10 +79,9 @@ class Maze(tk.Tk, object):
         elif action == 'gauche':
             if s[0] > UNIT:
                 base_action[0] -= UNIT
+
+        print(' base action: ', base_action)
         self.canvas.move(self.rect, base_action[0], base_action[1])
-        print('les index du tableau', env.q_table.loc[action, self.canvas.coords(self.rect)])
-        print('les columns du tableau', env.q_table.columns.tolist())
-        print('les lignes du tableau', )
         if self.canvas.coords(self.rect) == self.canvas.coords(self.oval):
             return 0
         else:
@@ -118,5 +117,4 @@ if __name__ == "__main__":
     env = Maze()
     env.check_state_exist()
     update()
-
     env.mainloop()

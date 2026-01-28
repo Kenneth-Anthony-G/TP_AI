@@ -116,7 +116,7 @@ def update():
     env.apprendre(action,etat_actuel,etat_suivant)
     if a == 0:
         print(env.q_table)
-        env.canvas.move(env.rect, 0, 0)
+        env.canvas.move(env.rect, -UNIT * (MAZE_W - 1)  , 0)
         env.after(200, update)
     else:
         env.after(200, update)
