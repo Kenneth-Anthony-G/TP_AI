@@ -7,20 +7,20 @@ import random
 import tkinter as tk
 
 UNIT = 100
-MAZE_H = 6
-MAZE_W = 6
-HALF_UNIT = UNIT/2
-HALF_UNIT_MINOS_10 = UNIT/2 - 10
+MAZE_H = 3
+MAZE_W = 3
 SIZE = int(3*UNIT/8)
 
 class Maze(tk.Tk, object):
     def __init__(self):
         super(Maze, self).__init__()
         self.title('Maze')
-        self.action_space = ['gauche','droite','haut','bas']
+        self.action_space = [0,1,2,3,4,5,6,7,8]
         self.n_actions = len(self.action_space)
+        self.cases = {}
         self.q_table = pd.DataFrame(columns=self.action_space,dtype=np.float64)
         self.geometry('{0}x{1}'.format(MAZE_W * UNIT, MAZE_H * UNIT,))
+        self.isCroix = True
         self._build_maze()
 
     def _build_maze(self):
@@ -41,94 +41,46 @@ class Maze(tk.Tk, object):
             x1, y1 = x0 + MAZE_W * UNIT, y0
             self.canvas.create_line(x0, y0, x1, y1)
 
-        # creer le point de départ
-        point_depart = np.array([UNIT / 8, UNIT / 8])
+        num = 0
 
-        # creer un carre a la premiere case
-        x0, y0 = point_depart[0], point_depart[1]
-        x1, y1 = x0 + 3 * UNIT/4, y0 + 3 * UNIT/4,
-        self.rect = self.canvas.create_rectangle(x0, y0, x1, y1, fill='red')
+        for r in range(MAZE_H):
+            for c in range(MAZE_W):
+                self.cases[num] = (r,c)
+                num += 1
 
-        #creer un rond a la sixieme case
-        x0, y0 = point_depart[0] + (MAZE_W - 1) * UNIT, point_depart[1] + (MAZE_H - 1) * UNIT
-        x1, y1 = x0 + 3 * UNIT/4, y0 + 3 * UNIT/4
-        self.oval = self.canvas.create_oval(x0, y0, x1, y1, fill='yellow')
-
-        #pack all
         self.canvas.pack()
 
-        return self.rect
-
-    def check_state_exist(self):
-        s = str(self.canvas.coords(self.rect))
-        if s not in self.q_table.index:
-            self.q_table = self.q_table._append(
-                pd.Series(
-                    [0]*len(self.action_space),
-                    index=self.q_table.columns,
-                    name=s
-                )
-            )
 
     def step(self, action):
-        s = self.canvas.coords(self.rect)
-        base_action = np.array([0, 0])
-        if action == 'droite':
-            if s[0] < (MAZE_W - 1) * UNIT:
-                base_action[0] += UNIT
-        elif action == 'gauche':
-            if s[0] > UNIT:
-                base_action[0] -= UNIT
-        elif action == 'haut':
-            if s[1] > UNIT:
-                base_action[1] -= UNIT
-        elif action == 'bas':
-            if s[1] < (MAZE_H - 1) * UNIT:
-                base_action[1] += UNIT
+        row, col = self.cases[action]
+        x0 = col * UNIT + UNIT / 8
+        y0 = row * UNIT + UNIT / 8
+        x1, y1 = x0 + 3 * UNIT / 4, y0 + 3 * UNIT / 4
 
-        self.canvas.move(self.rect, base_action[0], base_action[1])
-        if self.canvas.coords(self.rect) == self.canvas.coords(self.oval):
-            return 0
+        if self.isCroix:
+            self.canvas.create_oval(x0, y0, x1, y1, fill='yellow')
         else:
-            return 1
+            self.canvas.create_oval(x0, y0, x1, y1, fill='black')
+        self.isCroix = not self.isCroix
 
     def choisir_action(self):
-        env.check_state_exist()
-        if np.random.rand() < 0.1:
-            action = np.random.choice(self.action_space)
-        else:
-            s = str(self.canvas.coords(self.rect))
-            action_scores = self.q_table.loc[s, :]
-            action = np.random.choice(action_scores[action_scores == np.max(action_scores)].index)
-        return action
+        if len(self.action_space) == 0:
+            return False
+        choice = random.choice(self.action_space)
+        self.action_space.remove(choice)
 
-    def apprendre(self, action,etat_actuel, etat_suivant):
-        self.check_state_exist()
-        if etat_suivant == self.canvas.coords(self.oval):
-            q_cible = 1
-        else:
-            action_scores = self.q_table.loc[str(etat_suivant), :]
-            q_cible = 0.9 * np.max(action_scores)
-        q_actuel = self.q_table.loc[str(etat_actuel), action]
-
-        self.q_table.loc[str(etat_actuel),action] = 0.01 * (q_cible - q_actuel)
+        return choice
 
 def update():
-    etat_actuel = env.canvas.coords(env.rect)
-    action = env.choisir_action()
-    a = env.step(action)
-    etat_suivant = env.canvas.coords(env.rect)
-    env.apprendre(action,etat_actuel,etat_suivant)
-    if a == 0:
-        print(env.q_table)
-        env.canvas.move(env.rect, -UNIT * (MAZE_W - 1),-UNIT * (MAZE_H - 1) )
-        env.after(200, update)
-    else:
-        env.after(10, update)
+    choice = env.choisir_action()
+
+    if choice is False:
+        return
+    env.step(choice)
+    env.after(1000, update)  # rappel après 1 seconde
 
 
 if __name__ == "__main__":
     env = Maze()
-    env.check_state_exist()
     update()
     env.mainloop()
