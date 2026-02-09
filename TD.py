@@ -7,7 +7,7 @@ import random
 import tkinter as tk
 
 UNIT = 100
-MAZE_H = 1
+MAZE_H = 6
 MAZE_W = 6
 HALF_UNIT = UNIT/2
 HALF_UNIT_MINOS_10 = UNIT/2 - 10
@@ -17,7 +17,7 @@ class Maze(tk.Tk, object):
     def __init__(self):
         super(Maze, self).__init__()
         self.title('Maze')
-        self.action_space = ['gauche','droite']
+        self.action_space = ['gauche','droite','haut','bas']
         self.n_actions = len(self.action_space)
         self.q_table = pd.DataFrame(columns=self.action_space,dtype=np.float64)
         self.geometry('{0}x{1}'.format(MAZE_W * UNIT, MAZE_H * UNIT,))
@@ -50,7 +50,7 @@ class Maze(tk.Tk, object):
         self.rect = self.canvas.create_rectangle(x0, y0, x1, y1, fill='red')
 
         #creer un rond a la sixieme case
-        x0, y0 = point_depart[0] + (MAZE_W - 1) * UNIT, point_depart[1]
+        x0, y0 = point_depart[0] + (MAZE_W - 1) * UNIT, point_depart[1] + (MAZE_H - 1) * UNIT
         x1, y1 = x0 + 3 * UNIT/4, y0 + 3 * UNIT/4
         self.oval = self.canvas.create_oval(x0, y0, x1, y1, fill='yellow')
 
@@ -79,8 +79,13 @@ class Maze(tk.Tk, object):
         elif action == 'gauche':
             if s[0] > UNIT:
                 base_action[0] -= UNIT
+        elif action == 'haut':
+            if s[1] > UNIT:
+                base_action[1] -= UNIT
+        elif action == 'bas':
+            if s[1] < (MAZE_H - 1) * UNIT:
+                base_action[1] += UNIT
 
-        print(' base action: ', base_action)
         self.canvas.move(self.rect, base_action[0], base_action[1])
         if self.canvas.coords(self.rect) == self.canvas.coords(self.oval):
             return 0
@@ -116,9 +121,11 @@ def update():
     env.apprendre(action,etat_actuel,etat_suivant)
     if a == 0:
         print(env.q_table)
-        print('game over')
-    else:
+        env.canvas.move(env.rect, -UNIT * (MAZE_W - 1),-UNIT * (MAZE_H - 1) )
         env.after(200, update)
+    else:
+        env.after(10, update)
+
 
 if __name__ == "__main__":
     env = Maze()
